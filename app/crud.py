@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from .models import Message
 from .schemas import MessageCreate
-
+from sqlalchemy import desc
 
 def create_message(db: Session, message: MessageCreate):
     db_message = Message(content=message.content, session_id=message.session_id)
@@ -11,5 +11,7 @@ def create_message(db: Session, message: MessageCreate):
     return db_message
 
 
-def get_messages(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Message).offset(skip).limit(limit).all()
+def get_messages(db: Session, limit: int = 5):
+    messages = db.query(Message).all()
+    last_messages = messages[-limit:]
+    return last_messages
