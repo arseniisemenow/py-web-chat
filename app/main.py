@@ -1,8 +1,13 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
-from fastapi import Request
 import os
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from .database import SessionLocal, engine
+from .models import Base, Message
+from .schemas import MessageCreate
+from .crud import create_message, get_messages
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
@@ -15,7 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 class ConnectionManager:
     def __init__(self):
@@ -35,16 +47,24 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     await manager.connect(websocket)
     try:
+        # Send message history
+        messages = get_messages(db)
+        for message in messages:
+            await websocket.send_text(message.content)
+
         while True:
             data = await websocket.receive_text()
+            create_message(db, MessageCreate(content=data))
             await manager.broadcast(f"Message text was: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        print("WebSocket connection closed")
+
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 @app.get("/")
 async def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+

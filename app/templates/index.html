@@ -10,20 +10,41 @@
 <button onclick="sendMessage()">Send</button>
 
 <script>
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+    let ws;
+    let reconnectInterval = 1000; // 1 second
 
-    ws.onmessage = function(event) {
-        const messages = document.getElementById('messages');
-        const message = document.createElement('div');
-        message.textContent = event.data;
-        messages.appendChild(message);
-    };
+    function connect() {
+        ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+        ws.onopen = function(event) {
+            console.log("Connected to WebSocket");
+        };
+
+        ws.onmessage = function(event) {
+            const messages = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.textContent = event.data;
+            messages.appendChild(message);
+        };
+
+        ws.onclose = function(event) {
+            console.log(`WebSocket closed. Reconnecting in ${reconnectInterval / 1000} seconds...`);
+            setTimeout(connect, reconnectInterval);
+        };
+
+        ws.onerror = function(event) {
+            console.error("WebSocket error observed:", event);
+            ws.close();
+        };
+    }
 
     function sendMessage() {
         const input = document.getElementById("messageInput");
         ws.send(input.value);
         input.value = '';
     }
+
+    connect();
 </script>
 </body>
 </html>

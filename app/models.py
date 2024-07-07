@@ -1,6 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .database import Base
+from sqlalchemy.ext.declarative import declarative_base
+
+from datetime import datetime
+
+Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
@@ -13,6 +18,6 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    content = Column(String)
-    user = relationship("User")
+    content = Column(String, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
