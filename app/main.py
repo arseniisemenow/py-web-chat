@@ -7,7 +7,7 @@ from uuid import uuid4  # For generating unique session IDs
 from .database import SessionLocal, engine
 from .models import Base, Message
 from .schemas import MessageCreate
-from .crud import create_message, get_messages
+from .crud import create_message, get_last_messages
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
@@ -53,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     await manager.connect(websocket)
     try:
         # Send message history
-        messages = get_messages(db)
+        messages = get_last_messages(db)
         for message in messages:
             await websocket.send_text(f"{message.session_id}: {message.content}")
 

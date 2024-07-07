@@ -11,7 +11,7 @@ def create_message(db: Session, message: MessageCreate):
     return db_message
 
 
-def get_messages(db: Session, limit: int = 5):
+def get_last_messages(db: Session, limit: int = 5):
     messages = db.query(Message).all()
     last_messages = messages[-limit:]
     return last_messages

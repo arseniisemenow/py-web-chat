@@ -18,10 +18,12 @@
     };
 
     ws.onmessage = function(event) {
-        let messages = document.getElementById('messages');
+        let messagesDiv = document.getElementById('messages');
         let message = document.createElement('div');
         message.textContent = event.data;
-        messages.appendChild(message);
+        messagesDiv.appendChild(message);
+
+        limitMessages();
     };
 
     function sendMessage() {
@@ -45,6 +47,16 @@
             sendMessage();
         }
     });
+
+    function limitMessages() {
+        let messagesDiv = document.getElementById('messages');
+        const maxMessagesToShow = 5;
+        if (messagesDiv.children.length > maxMessagesToShow) {
+            while (messagesDiv.children.length > maxMessagesToShow) {
+                messagesDiv.removeChild(messagesDiv.children[0]);
+            }
+        }
+    }
 </script>
 </body>
 </html>
