@@ -20,4 +20,5 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    session_id = Column(String, index=True)
 

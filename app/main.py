@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from uuid import uuid4  # For generating unique session IDs
 from .database import SessionLocal, engine
 from .models import Base, Message
 from .schemas import MessageCreate
@@ -48,17 +49,19 @@ manager = ConnectionManager()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+    session_id = str(uuid4())  # Generate a unique session ID for this connection
     await manager.connect(websocket)
     try:
         # Send message history
         messages = get_messages(db)
         for message in messages:
-            await websocket.send_text(message.content)
+            await websocket.send_text(f"{message.session_id}: {message.content}")
 
         while True:
             data = await websocket.receive_text()
-            create_message(db, MessageCreate(content=data))
-            await manager.broadcast(f"Message text was: {data}")
+            message_data = {"content": data, "session_id": session_id}
+            create_message(db, MessageCreate(**message_data))
+            await manager.broadcast(f"{session_id}: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
@@ -67,4 +70,5 @@ templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "t
 @app.get("/")
 async def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
