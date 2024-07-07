@@ -1,1 +1,5 @@
-# py-web-chat
+# Chat Project
+
+## Запуск проекта
+
+[//]: # (todo: supplement)
