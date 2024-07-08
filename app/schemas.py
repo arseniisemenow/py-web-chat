@@ -1,10 +1,10 @@
 from pydantic import BaseModel, EmailStr, constr
 
 
-
 class MessageCreate(BaseModel):
     content: str
     session_id: str
+
 
 class Message(BaseModel):
     id: int
@@ -15,18 +15,20 @@ class Message(BaseModel):
         orm_mode = True
 
 
-class UserBase(BaseModel):
-    username: str
-    email: EmailStr
-
 class TokenData(BaseModel):
     email: str | None = None
 
-class UserCreate(UserBase):
-    password: constr(min_length=8)
 
-class User(UserBase):
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class User(BaseModel):
     id: int
+    username: str
+    email: str
 
     class Config:
         orm_mode = True

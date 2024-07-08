@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 from .models import Base, Message, User
@@ -9,7 +9,6 @@ from .crud import create_message, get_last_messages
 
 from .database import SessionLocal, engine
 from passlib.context import CryptContext
-from fastapi.templating import Jinja2Templates
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
@@ -26,7 +25,6 @@ from .auth import (
 )
 
 app = FastAPI()
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 origins = ["*"]
@@ -39,7 +37,6 @@ app.add_middleware(
 )
 
 Base.metadata.create_all(bind=engine)
-
 
 def get_db():
     db = SessionLocal()
@@ -54,11 +51,17 @@ async def read_sign_up(request: Request):
     return auth.templates.TemplateResponse("sign_up.html", {"request": request})
 
 @app.post("/sign-up")
-async def sign_up(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
+async def sign_up(
+        username: str = Form(...),
+        email: str = Form(...),
+        password: str = Form(...),
+        db: Session = Depends(get_db)
+):
+    db_user = crud.get_user_by_email(db, email=email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    user.hashed_password = get_password_hash(user.password)
+    hashed_password = get_password_hash(password)
+    user = schemas.UserCreate(username=username, email=email, password=hashed_password)
     return crud.create_user(db=db, user=user)
 
 @app.get("/auth")
