@@ -1,7 +1,9 @@
+import logging
 import os
-
+from jose import jws
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from uuid import uuid4
 from .models import Base, Message, User
 from .schemas import MessageCreate
@@ -38,6 +40,7 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -50,8 +53,10 @@ def get_db():
 async def read_sign_up(request: Request):
     return auth.templates.TemplateResponse("sign_up.html", {"request": request})
 
+
 @app.post("/sign-up")
 async def sign_up(
+        response: Response,
         username: str = Form(...),
         email: str = Form(...),
         password: str = Form(...),
@@ -60,16 +65,22 @@ async def sign_up(
     db_user = crud.get_user_by_email(db, email=email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+
     hashed_password = get_password_hash(password)
     user = schemas.UserCreate(username=username, email=email, password=hashed_password)
-    return crud.create_user(db=db, user=user)
+    crud.create_user(db=db, user=user)
+
+    return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
+
 
 @app.get("/auth")
 async def read_auth(request: Request):
     return auth.templates.TemplateResponse("auth.html", {"request": request})
 
+
 @app.post("/auth")
-async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(),
+                                 db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -77,16 +88,20 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
-    return {"access_token": access_token, "token_type": "bearer"}
+    # return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
-@app.get("/")
+
+@app.get("/chat")
 async def protected_route(current_user: User = Depends(get_current_active_user)):
+    # logging.debug(f"Current user: {current_user.username}")
     return {"message": f"Hello, {current_user.username}!"}
+
+
 
 class ConnectionManager:
     def __init__(self):
@@ -106,9 +121,10 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
-    session_id = str(uuid4())  # Generate a unique session ID for this connection
+    session_id = str(uuid4())
     await manager.connect(websocket)
     try:
         # Send message history
@@ -125,6 +141,6 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         manager.disconnect(websocket)
 
 
-@app.get("/")
-async def get(request: Request):
-    return auth.templates.TemplateResponse("index.html", {"request": request})
+# @app.get("/")
+# async def get(request: Request):
+#     return auth.templates.TemplateResponse("index.html", {"request": request})

@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Log In</title>
 </head>
 <body>
-<h1>Login</h1>
+<h1>Log In</h1>
 <form action="/auth" method="post">
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required><br>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
     <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required><br>
-    <button type="submit">Login</button>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <input type="submit" value="Log In">
 </form>
 </body>
 </html>
