@@ -24,6 +24,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))  # :D
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -51,18 +52,6 @@ def authenticate_user(db: Session, email: str, password: str) -> models.User | N
         return None
     print(f"User '{email}' authenticated successfully")
     return user
-
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
 
 def get_db():
@@ -93,5 +82,5 @@ async def get_current_user(db: Session = Depends(get_db), token: str = Depends(o
     return user
 
 
-async def get_current_active_user(current_user: models.User = Depends(get_current_user)) -> models.User:
-    return current_user
+# async def get_current_active_user(current_user: models.User = Depends(get_current_user)) -> models.User:
+#     return current_user

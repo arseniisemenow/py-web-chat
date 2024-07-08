@@ -1,30 +1,22 @@
 import logging
-import os
-from jose import jws
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 from uuid import uuid4
+from datetime import timedelta, datetime
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException, status, Cookie
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse, Response
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
 from .models import Base, Message, User
 from .schemas import MessageCreate
 from .crud import create_message, get_last_messages
-
 from .database import SessionLocal, engine
-from passlib.context import CryptContext
-
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from datetime import timedelta
 from . import models, schemas, crud, auth
-from .database import engine
-from .auth import (
-    get_password_hash,
-    create_access_token,
-    authenticate_user,
-    get_current_active_user,
-    get_db
-)
+from .auth import get_password_hash, authenticate_user, get_db
+
+SECRET_KEY = "your_secret_key"  # Replace with your secret key
+ALGORITHM = "HS256"
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -40,6 +32,8 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
+
 
 def get_db():
     db = SessionLocal()
@@ -49,6 +43,46 @@ def get_db():
         db.close()
 
 
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def get_current_user_from_cookie(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    user = crud.get_user_by_email(db, email=email)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+async def get_current_active_user(current_user: User = Depends(get_current_user_from_cookie)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
 @app.get("/sign-up")
 async def read_sign_up(request: Request):
     return auth.templates.TemplateResponse("sign_up.html", {"request": request})
@@ -56,7 +90,6 @@ async def read_sign_up(request: Request):
 
 @app.post("/sign-up")
 async def sign_up(
-        response: Response,
         username: str = Form(...),
         email: str = Form(...),
         password: str = Form(...),
@@ -92,15 +125,25 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
-    # return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=access_token, httponly=True)
+    return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/chat")
 async def protected_route(current_user: User = Depends(get_current_active_user)):
-    # logging.debug(f"Current user: {current_user.username}")
     return {"message": f"Hello, {current_user.username}!"}
 
+
+@app.get("/user-info")
+async def get_user_info(current_user: User = Depends(get_current_active_user)):
+    return {"email": current_user.email}
+
+
+@app.get("/logout")
+async def logout(response: Response, access_token: str = Cookie(None)):
+    if access_token:
+        response.set_cookie(key="access_token", value="", expires=0, httponly=True)
+    return RedirectResponse(url="/auth")
 
 
 class ConnectionManager:
@@ -139,8 +182,3 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
             await manager.broadcast(f"{session_id}: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
-
-# @app.get("/")
-# async def get(request: Request):
-#     return auth.templates.TemplateResponse("index.html", {"request": request})

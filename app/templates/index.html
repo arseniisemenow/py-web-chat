@@ -5,6 +5,7 @@
 </head>
 <body>
 <h1>WebSocket Chat</h1>
+<div id="user-info"></div>
 <div id="messages"></div>
 <input type="text" id="messageInput" autocomplete="off"/>
 <button onclick="sendMessage()">Send</button>
@@ -12,6 +13,22 @@
 <script>
     let sessionId = null;
     let ws = new WebSocket("ws://localhost:8000/ws");
+    let userEmail = null;
+
+    async function getUserInfo() {
+        try {
+            let response = await fetch('/user-info');
+            if (response.ok) {
+                let user = await response.json();
+                userEmail = user.email;
+                document.getElementById('user-info').textContent = `Logged in as: ${user.email}`;
+            } else {
+                console.error('Failed to fetch user info');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 
     ws.onopen = function(event) {
         sessionId = uuidv4();
@@ -29,8 +46,8 @@
     function sendMessage() {
         let input = document.getElementById("messageInput");
         let message = input.value;
-        if (sessionId) {
-            ws.send(message);
+        if (sessionId && userEmail) {
+            ws.send(`${userEmail}: ${message}`);
             input.value = '';
         }
     }
@@ -57,6 +74,9 @@
             }
         }
     }
+
+    // Fetch user info on page load
+    getUserInfo();
 </script>
 </body>
 </html>
