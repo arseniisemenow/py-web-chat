@@ -11,11 +11,21 @@
 <button onclick="sendMessage()">Send</button>
 
 <script>
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    let token = getCookie('access_token');
+    console.log("token " + token)
+
     let sessionId = null;
-    let ws = new WebSocket("ws://localhost:8000/ws");
+    let ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
     let userEmail = null;
 
-    async function getUserInfo() {
+    async function updateUserInfo() {
         try {
             let response = await fetch('/user-info');
             if (response.ok) {
@@ -76,7 +86,7 @@
     }
 
     // Fetch user info on page load
-    getUserInfo();
+    updateUserInfo();
 </script>
 </body>
 </html>

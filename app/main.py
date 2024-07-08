@@ -77,6 +77,20 @@ def get_current_user_from_cookie(request: Request, db: Session = Depends(get_db)
     return user
 
 
+def validate_token(token: str) -> bool:
+    """
+    Validate the provided JWT token.
+
+    This function verifies the token's signature and checks if it is valid.
+    """
+    try:
+        # Decode the token, verifying the signature and validating its claims
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return True
+    except JWTError:
+        return False
+
+
 async def get_current_active_user(current_user: User = Depends(get_current_user_from_cookie)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -125,13 +139,15 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token", value=access_token, httponly=True)
+    response.set_cookie(key="access_token", value=access_token)
     return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/chat")
-async def protected_route(current_user: User = Depends(get_current_active_user)):
-    return {"message": f"Hello, {current_user.username}!"}
+async def protected_route(request: Request, current_user: User = Depends(get_current_active_user)):
+    return auth.templates.TemplateResponse("index.html", {"request": request})
+
+# return {"message": f"Hello, {current_user.username}!"}
 
 
 @app.get("/user-info")
@@ -164,21 +180,33 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, token: str, db: SessionLocal = Depends(get_db)):
+    # Validate token and retrieve current user
+    if not token:
+        await websocket.close(code=4000, reason="Missing token")
+        return
+
+    is_valid = validate_token(token)
+
+    if not is_valid:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     session_id = str(uuid4())
     await manager.connect(websocket)
-    try:
-        # Send message history
-        messages = get_last_messages(db)
-        for message in messages:
-            await websocket.send_text(f"{message.session_id}: {message.content}")
 
+    try:
         while True:
             data = await websocket.receive_text()
-            message_data = {"content": data, "session_id": session_id}
+
+            message_data = {
+                "timestamp": "datetime.datetime.now().isoformat()",
+                "email": "is_valid.email",
+                "content": "data",
+                "session_id": "session_id"
+            }
             create_message(db, MessageCreate(**message_data))
-            await manager.broadcast(f"{session_id}: {data}")
+            await manager.broadcast(f"{message_data['timestamp']} - {message_data['email']}: {message_data['content']}")
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
