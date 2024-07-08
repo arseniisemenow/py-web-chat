@@ -2,15 +2,32 @@ import os
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from uuid import uuid4  # For generating unique session IDs
-from .database import SessionLocal, engine
-from .models import Base, Message
+from uuid import uuid4
+from .models import Base, Message, User
 from .schemas import MessageCreate
 from .crud import create_message, get_last_messages
+
+from .database import SessionLocal, engine
+from passlib.context import CryptContext
 from fastapi.templating import Jinja2Templates
 
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from datetime import timedelta
+from . import models, schemas, crud, auth
+from .database import engine
+from .auth import (
+    get_password_hash,
+    create_access_token,
+    authenticate_user,
+    get_current_active_user,
+    get_db
+)
+
 app = FastAPI()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 origins = ["*"]
 app.add_middleware(
@@ -23,12 +40,50 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+@app.get("/sign-up")
+async def read_sign_up(request: Request):
+    return auth.templates.TemplateResponse("sign_up.html", {"request": request})
+
+@app.post("/sign-up")
+async def sign_up(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user.hashed_password = get_password_hash(user.password)
+    return crud.create_user(db=db, user=user)
+
+@app.get("/auth")
+async def read_auth(request: Request):
+    return auth.templates.TemplateResponse("auth.html", {"request": request})
+
+@app.post("/auth")
+async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/")
+async def protected_route(current_user: User = Depends(get_current_active_user)):
+    return {"message": f"Hello, {current_user.username}!"}
 
 class ConnectionManager:
     def __init__(self):
@@ -44,6 +99,7 @@ class ConnectionManager:
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
+
 
 manager = ConnectionManager()
 
@@ -65,10 +121,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 @app.get("/")
 async def get(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
+    return auth.templates.TemplateResponse("index.html", {"request": request})
