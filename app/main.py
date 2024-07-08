@@ -15,6 +15,8 @@ from .database import SessionLocal, engine
 from . import models, schemas, crud, auth
 from .auth import get_password_hash, authenticate_user, get_db
 
+from typing import List
+
 SECRET_KEY = "your_secret_key"  # Replace with your secret key
 ALGORITHM = "HS256"
 
@@ -41,19 +43,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
 def get_current_user_from_cookie(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
     if not token:
@@ -77,6 +66,29 @@ def get_current_user_from_cookie(request: Request, db: Session = Depends(get_db)
     return user
 
 
+async def get_current_active_user(current_user: User = Depends(get_current_user_from_cookie)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+@app.get("/users", response_model=List[schemas.User])
+def read_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    users = crud.get_all_users(db)
+    return users
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+
 def validate_token(token: str) -> bool:
     """
     Validate the provided JWT token.
@@ -98,11 +110,6 @@ def get_user_data_from_token(token: str):
     except JWTError:
         return None
 
-
-async def get_current_active_user(current_user: User = Depends(get_current_user_from_cookie)):
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
 
 
 @app.get("/sign-up")
@@ -156,6 +163,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 async def protected_route(request: Request, current_user: User = Depends(get_current_active_user)):
     return auth.templates.TemplateResponse("index.html", {"request": request})
 
+
 # return {"message": f"Hello, {current_user.username}!"}
 
 
@@ -168,7 +176,7 @@ async def get_user_info(current_user: User = Depends(get_current_active_user)):
 async def logout(response: Response, access_token: str = Cookie(None)):
     if access_token:
         response.set_cookie(key="access_token", value="", expires=0, httponly=False)
-    return RedirectResponse(url="/auth")
+    # return RedirectResponse(url="/auth")
 
 
 class ConnectionManager:
@@ -188,6 +196,7 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str, db: Session = Depends(get_db)):
