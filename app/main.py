@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from .models import Base, Message, User
 from .schemas import MessageCreate
-from .crud import create_message, get_last_messages
+from .crud import create_message, get_last_messages, get_user_by_email
 from .database import SessionLocal, engine
 from . import models, schemas, crud, auth
 from .auth import get_password_hash, authenticate_user, get_db
@@ -91,6 +91,14 @@ def validate_token(token: str) -> bool:
         return False
 
 
+def get_user_data_from_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except JWTError:
+        return None
+
+
 async def get_current_active_user(current_user: User = Depends(get_current_user_from_cookie)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -138,9 +146,10 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
+
     )
     response.set_cookie(key="access_token", value=access_token)
-    return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
+    # return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/chat")
@@ -158,7 +167,7 @@ async def get_user_info(current_user: User = Depends(get_current_active_user)):
 @app.get("/logout")
 async def logout(response: Response, access_token: str = Cookie(None)):
     if access_token:
-        response.set_cookie(key="access_token", value="", expires=0, httponly=True)
+        response.set_cookie(key="access_token", value="", expires=0, httponly=False)
     return RedirectResponse(url="/auth")
 
 
@@ -181,8 +190,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str, db: SessionLocal = Depends(get_db)):
-    # Validate token and retrieve current user
+async def websocket_endpoint(websocket: WebSocket, token: str, db: Session = Depends(get_db)):
     if not token:
         await websocket.close(code=4000, reason="Missing token")
         return
@@ -190,23 +198,25 @@ async def websocket_endpoint(websocket: WebSocket, token: str, db: SessionLocal 
     is_valid = validate_token(token)
 
     if not is_valid:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        await websocket.close(code=4001, reason="Invalid token")
+        return
 
-    session_id = str(uuid4())
+    user_data = get_user_data_from_token(token)
     await manager.connect(websocket)
-
     try:
+        last_messages = get_last_messages(db, limit=10)
+        for message in last_messages:
+            await websocket.send_text(f"{message.timestamp.isoformat()} - {message.email}: {message.content}")
+
         while True:
             data = await websocket.receive_text()
-
             message_data = {
-                "timestamp": "datetime.datetime.now().isoformat()",
-                "email": "is_valid.email",
-                "content": "data",
-                "session_id": "session_id"
+                "timestamp": datetime.utcnow().isoformat(),
+                "email": user_data["sub"],
+                "content": data,
+                "session_id": str(uuid4())
             }
             create_message(db, MessageCreate(**message_data))
             await manager.broadcast(f"{message_data['timestamp']} - {message_data['email']}: {message_data['content']}")
-
     except WebSocketDisconnect:
         manager.disconnect(websocket)

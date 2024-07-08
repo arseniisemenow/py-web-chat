@@ -5,68 +5,56 @@
 </head>
 <body>
 <h1>WebSocket Chat</h1>
-<div id="user-info"></div>
 <div id="messages"></div>
 <input type="text" id="messageInput" autocomplete="off"/>
 <button onclick="sendMessage()">Send</button>
+<button onclick="logout()">Logout</button>
 
 <script>
+    let ws;
+    let token = document.cookie.split('; ').find(row => row.startsWith('access_token')).split('=')[1];
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+    function connectWebSocket() {
+        ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
+
+        ws.onopen = function(event) {
+            console.log("WebSocket is open now.");
+        };
+
+        ws.onmessage = function(event) {
+            let messagesDiv = document.getElementById('messages');
+            let message = document.createElement('div');
+            message.textContent = event.data;
+            messagesDiv.appendChild(message);
+
+            limitMessages();
+        };
+
+        ws.onclose = function(event) {
+            console.log("WebSocket is closed now.");
+        };
+
+        ws.onerror = function(event) {
+            console.error("WebSocket error observed:", event);
+        };
     }
-
-    let token = getCookie('access_token');
-    console.log("token " + token)
-
-    let sessionId = null;
-    let ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
-    let userEmail = null;
-
-    async function updateUserInfo() {
-        try {
-            let response = await fetch('/user-info');
-            if (response.ok) {
-                let user = await response.json();
-                userEmail = user.email;
-                document.getElementById('user-info').textContent = `Logged in as: ${user.email}`;
-            } else {
-                console.error('Failed to fetch user info');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    ws.onopen = function(event) {
-        sessionId = uuidv4();
-    };
-
-    ws.onmessage = function(event) {
-        let messagesDiv = document.getElementById('messages');
-        let message = document.createElement('div');
-        message.textContent = event.data;
-        messagesDiv.appendChild(message);
-
-        limitMessages();
-    };
 
     function sendMessage() {
         let input = document.getElementById("messageInput");
         let message = input.value;
-        if (sessionId && userEmail) {
-            ws.send(`${userEmail}: ${message}`);
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(message);
             input.value = '';
         }
     }
 
-    function uuidv4() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+    function logout() {
+        fetch('/logout')
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            });
     }
 
     document.getElementById("messageInput").addEventListener("keyup", function(event) {
@@ -77,16 +65,13 @@
 
     function limitMessages() {
         let messagesDiv = document.getElementById('messages');
-        const maxMessagesToShow = 5;
-        if (messagesDiv.children.length > maxMessagesToShow) {
-            while (messagesDiv.children.length > maxMessagesToShow) {
-                messagesDiv.removeChild(messagesDiv.children[0]);
-            }
+        let messages = messagesDiv.getElementsByTagName('div');
+        if (messages.length > 5) {
+            messagesDiv.removeChild(messages[0]);
         }
     }
 
-    // Fetch user info on page load
-    updateUserInfo();
+    connectWebSocket();
 </script>
 </body>
 </html>
