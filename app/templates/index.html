@@ -39,101 +39,143 @@
         }
 
         #users-area {
+            overflow-x:none ;
+            overflow-y: auto;
             border-radius: 8px;
             width: 20%;
             overflow: auto;
             background-color: var(--areas-back-color);
             padding: 10px;
-            min-width: 160px;
+            min-width: 200px;
             border: 1px solid #555;
             margin-bottom: 10px;
+            max-height: fit-content;
+            max-height: 90vh;
         }
 
         #chat-area {
-            flex: 1;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             max-width: 50%;
+            min-width: 100px;
             margin: auto;
             margin-top: 10px;
             margin-bottom: 10px;
-            min-width: 160px;
             background-color: var(--areas-back-color);
             border-radius: 8px;
             border: 1px solid #555;
-        }
+            overflow: hidden; /* добавим ограничение на переполнение */
+            max-height: fit-content;
+    }
 
-        #messages_list {
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-color: #6969dd #e0e0e0;
-            scrollbar-width: thin;
-            padding: 10px;
-            margin-right: 10px;
-            background-color: var(--areas-back-color);
-            border-radius: 8px;
-            max-height: calc(100% - 60px);
-        }
+    #messages_list {
+        
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: var(--areas-back-color);
+        border-radius: 8px;
+        max-height: 85vh; /* изменяем на высоту контейнера в пределах 70% видимой высоты */
+    }
 
-        #messages_list ::-webkit-scrollbar-track {
-            background: var(--background-color);
-        }
+    .user-message {
+        border: 25px;
+        background-color: var(--message-back-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 4px 0;
+        font-size: medium;
+        border: 1px solid #555;
+    }
 
-        .user-message {
-            border: 25px;
-            background-color: var(--message-back-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 4px 0;
-            font-size: medium;
-            border: 1px solid #555;
-        }
+    .current-user-message {
+        border: 25px;
+        background-color: var(--button-back-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 4px 0;
+        font-size: medium;
+        border: 1px solid #555;
+    }
 
-        .message-username {
-            color: var(--user-name-color);
-            margin-bottom: 5px;
-            font-size: medium;
+   .mesage-username {
+        color: var(--user-name-color);
+        margin-bottom: 5px;
+        font-size: medium;
             font-weight: bold;
         }
 
-        .input-group {
-            display: flex;
-            align-items: center;
-            padding: 10px 10px 10px 10px;
+    .input-group {
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+    }
+
+    #messageInput {
+        flex: 1;
+        height: 40px;
+        border-radius: 8px 0 0 8px;
+        background-color: var(--input-back-color);
+        color: var(--input-font-color);
+        border: none;
+        padding: 0 10px;
+    }
+
+    button {
+        min-width: 80px;
+        height: 40px;
+        border-radius: 0 8px 8px 0;
+        background-color: var(--button-back-color);
+        color: var(--button-font-color);
+        border: none;
+        cursor: pointer;
+    }
+
+    .user{
+
+        border: 25px;
+        background-color: var(--message-back-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 4px 0;
+        font-size: medium;
+        border: 1px solid #555;
+    }
+
+    br {
+        content: ' ';
+        display: block;
+        margin: 5px; /* Регулируйте отступы, чтобы задать желаемую толщину линии */
+        border-bottom: 1px solid #ccc; /* Линия будет серого цвета, можно заменить на нужный цвет */
+    }
+
+    .logout-button {
+            position: absolute;
+            top: 10px; /* Расположение сверху */
+            right: 10px; /* Расположение справа */
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            background-color: #6a0808;
+            color: #ffffff;
         }
 
-        #messageInput {
-            flex: 1;
-            height: 40px;
-            border-radius: 8px 0 0 8px; /* Убираем закругление справа */
-            background-color: var(--input-back-color);
-            color: var(--input-font-color);
-            border: none; /* Убираем границу для поля ввода */
-            padding: 0 10px; /* Добавим внутренний отступ для поля ввода */
-            
-        }
-
-        button {
-            min-width: 80px;
-            height: 40px;
-            flex: 0;
-            border-radius: 0 8px 8px 0; /* Добавляем закругление справа для кнопки */
-            background-color: var(--button-back-color);
-            color: var(--button-font-color);
-            margin-left: 10px;
-            border: none; /* Убираем границу для кнопки */
-            cursor: pointer; /* Делаем курсор указателем при наведении на кнопку */
-        }
     </style>
 </head>
 <body>
-    <h1>WebSocket Chat</h1>
+      <div class="header-container">
+        <h1>WebSocket Chat</h1>
+        <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
     
     <div class="chat-container">
-        <div id="users-area">
-            <h2>Users</h2>
+        <div  id="users-area">
+            <label>Welcome!</label>
+            <div id="current-user" class="user" >Users</div>
+            <br>
             <div id="users_list">
-                Users
+                members
             </div>
 
         </div>
@@ -141,46 +183,112 @@
         <div id="chat-area">
             
             <div id="messages_list">
-               
+
             </div>
             <div class="input-group">
-                <input type="text" id="messageInput" class="form-control" autocomplete="off" />
+                <textarea id="messageInput" class="form-control" autocomplete="off"></textarea>
                 <button onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
     
-<script>
+<script defer>
     let ws;
     let token = document.cookie.split('; ').find(row => row.startsWith('access_token')).split('=')[1];
+    
 
     function connectWebSocket() {
         ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
+    }
 
+    connectWebSocket();
+
+    let current_user;
+    function loadUserInfo() {
+    fetch('/user-info')
+        .then(response => response.json())
+        .then(userInfo => {
+        let usersArea = document.getElementById('current-user');
+        usersArea.textContent = userInfo.email;
+        current_user=userInfo.email; // Здесь устанавливаем email как текст
+        
+        })
+        .catch(error => {
+        console.error('Ошибка при получении информации о пользователе:', error);
+        });
+    }
+    loadUserInfo();
+    
     ws.onmessage = function(event) {
+        
+        console.log("current_user: "+current_user);
         let messagesDiv = document.getElementById('messages_list');
-        let messageData = event.data.split(':'); // Разделяем данные на части по символу ":"
-        let user_name = messageData[0].trim(); // Получаем имя пользователя (убираем пробелы)
-        let messageText = messageData.slice(1).join(':').trim(); // Получаем текст сообщения (с учётом возможного наличия ':' в сообщении)
+        let messageData = event.data.split(' - '); // Разделяем данные на части по символу " - "
+        let timeData = messageData[0].trim();
+        let time = timeData.substr(11, 5); // Получаем только часы и минуты
+
+        let userData = messageData[1].split(':');
+        let user_email = userData[0]; // Получаем полную почту пользователя без обрезания
+        let messageText = userData.slice(1).join(':').trim(); // Получаем текст сообщения (с учётом возможного наличия ':' в сообщении)
 
         let message = document.createElement('div');
+        if(current_user == user_email) {
+            message.className = 'current-user-message';
+        }
+        else {
+            message.className = 'user-message';
+        }
         message.className = 'user-message';
-
         let userNameElement = document.createElement('div');
-        userNameElement.textContent = user_name;
+        userNameElement.textContent = `${user_email} - ${time}`;
         userNameElement.className = 'message-username';
-        
+
         let messageElement = document.createElement('div');
         messageElement.textContent = messageText;
         messageElement.className = 'message-text';
 
-        message.appendChild(userNameElement);  // Добавляем элемент с именем пользователя в сообщение
+        message.appendChild(userNameElement);  // Добавляем элемент с временем и почтой пользователя в сообщение
         message.appendChild(messageElement);  // Добавляем элемент с текстом сообщения в сообщение
 
         messagesDiv.appendChild(message);
         limitMessages();
-    };
+    }
+
+        function loadUsers() {
+            fetch('/users')
+                .then(response => response.json())
+                .then(users => {
+                    let usersDiv = document.getElementById('users_list');
+
+                    users.forEach(user => {
+                        let userElement = document.createElement('div');
+                     
+                        userElement.className = 'user';
+                        let userNameElement = document.createElement('div');
+                        userNameElement.textContent = user.name;
+                        userNameElement.className = 'user-name';
+
+                        let userEmailElement = document.createElement('div');
+                        userEmailElement.textContent = user.email;
+                        userEmailElement.className = 'user-email';
+
+                        userElement.appendChild(userNameElement);
+                        userElement.appendChild(userEmailElement);
+
+                        usersDiv.appendChild(userElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Ошибка при получении пользователей:', error);
+                });
+        }
+
+        loadUsers();
+
+
+
+   
 
     function sendMessage() {
         let input = document.getElementById("messageInput");
@@ -192,13 +300,17 @@
     }
 
     function logout() {
-        fetch('/logout')
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                }
-            });
-    }
+    fetch('/logout')
+        .then(response => {
+            if (response.redirected) {
+		// Обрабатываем перенаправление на страницу /auth
+                window.location.href = response.url; 
+            } else {
+		// Если не было перенаправления, можно перенаправить вручную
+                window.location.href = '/auth'; 
+            }
+        });
+}
 
     document.getElementById("messageInput").addEventListener("keyup", function(event) {
         if (event.key === "Enter") {
@@ -216,8 +328,8 @@
         }
     }
 
-    connectWebSocket();
-}
+  
+
 </script>
 </body>
 </html>
