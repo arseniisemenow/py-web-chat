@@ -156,7 +156,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 
     )
     response.set_cookie(key="access_token", value=access_token)
-    return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
+    # return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/chat")
