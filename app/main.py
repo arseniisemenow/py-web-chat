@@ -156,7 +156,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 
     )
     response.set_cookie(key="access_token", value=access_token)
-    # return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/chat", status_code=status.HTTP_302_FOUND)
 
 
 @app.get("/chat")
@@ -175,9 +175,8 @@ async def get_user_info(current_user: User = Depends(get_current_active_user)):
 @app.get("/logout")
 async def logout(response: Response, access_token: str = Cookie(None)):
     if access_token:
-        response.set_cookie(key="access_token", value="", expires=0, httponly=False)
-    # return RedirectResponse(url="/auth")
-
+        response.set_cookie(key="access_token", value="", expires=0, httponly=True)
+    return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
 class ConnectionManager:
     def __init__(self):
