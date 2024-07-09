@@ -151,12 +151,11 @@
 
     
 <script>
-    let sessionId = null;
-    let ws = new WebSocket("ws://localhost:8000/ws");
+    let ws;
+    let token = document.cookie.split('; ').find(row => row.startsWith('access_token')).split('=')[1];
 
-    ws.onopen = function(event) {
-        sessionId = uuidv4();
-    };
+    function connectWebSocket() {
+        ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
 
     ws.onmessage = function(event) {
         let messagesDiv = document.getElementById('messages_list');
@@ -185,17 +184,19 @@
     function sendMessage() {
         let input = document.getElementById("messageInput");
         let message = input.value;
-        if (sessionId) {
+        if (ws.readyState === WebSocket.OPEN) {
             ws.send(message);
             input.value = '';
         }
     }
 
-    function uuidv4() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+    function logout() {
+        fetch('/logout')
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            });
     }
 
     document.getElementById("messageInput").addEventListener("keyup", function(event) {
@@ -213,6 +214,8 @@
             }
         }
     }
+
+    connectWebSocket();
 </script>
 </body>
 </html>
