@@ -1,7 +1,24 @@
-version: '3.1'
+version: '3.8'
 
 services:
-  web:
-    build: app
+
+  db:
+
+    build: 
+      context: ./
+      dockerfile: Dockerfile.db
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.app
     ports:
       - "8000:8000"
+    depends_on:
+      - db
