@@ -58,11 +58,16 @@
             text-align: center; /* Center the text */
             margin-top: 10px; /* Add some space between the button and the link */
         }
+
+        p{
+            text-align:center;
+            color: rgb(223, 117, 117);
+        }
         
     </style>
 </head>
 <body>
-    <form action="/sign-up" method="post">
+    <form id="signup-form" onsubmit="submitForm(event)">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
         <label for="email">Email:</label>
@@ -70,7 +75,39 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
         <button type="submit">Sign Up</button>
+        <p id="error-info" class="error-message"></p>
         <a href="/auth">Already have an account? Log in!</a> 
     </form>
+
+    <script>
+        function submitForm(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            let formData = new FormData(document.getElementById('signup-form')); // Get form data
+            fetch('/sign-up', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Handle successful response (e.g., redirect to a new page)
+                    window.location.href = '/auth'; // Replace with the actual success page
+                } else {
+                    // Handle error response and extract error message if available
+                    response.text().then(errorMessage => {
+                        document.getElementById('error-info').textContent = "it's busy here :D";
+                    }).catch(error => {
+                        console.error('Error fetching error message:', error);
+                        document.getElementById('error-info').textContent = 'Unknown error occurred';
+                    });
+                }
+            })
+            .catch(error => {
+                // Handle network errors
+                console.error('Error:', error);
+                document.getElementById('error-info').textContent = 'An error occurred. Please try again later.'; // Show a generic error message
+            });
+        }
+    </script>
 </body>
 </html>

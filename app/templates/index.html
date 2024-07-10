@@ -54,30 +54,27 @@
         }
 
         #chat-area {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            max-width: 50%;
-            min-width: 100px;
-            margin: auto;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            background-color: var(--areas-back-color);
-            border-radius: 8px;
-            border: 1px solid #555;
-            overflow: hidden; /* добавим ограничение на переполнение */
-            max-height: fit-content;
-    }
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 50%; /* Changed max-width to width */
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: var(--areas-back-color);
+    border-radius: 8px;
+    border: 1px solid #555;
+    overflow: hidden;
+}
 
-    #messages_list {
-        
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        background-color: var(--areas-back-color);
-        border-radius: 8px;
-        max-height: 85vh; /* изменяем на высоту контейнера в пределах 70% видимой высоты */
-    }
+#messages_list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: var(--areas-back-color);
+    border-radius: 8px;
+    max-height: 85vh;  /* Changed max-height to 50% of the viewport height */
+}
 
     .user-message {
         border: 25px;
@@ -87,6 +84,9 @@
         margin: 4px 0;
         font-size: medium;
         border: 1px solid #555;
+        overflow-x: none;
+        word-wrap: break-word; /* Add this line to enable word wrapping */
+        white-space: pre-line; /* Ensure that new lines are respected */
     }
 
     .current-user-message {
@@ -120,6 +120,8 @@
         color: var(--input-font-color);
         border: none;
         padding: 0 10px;
+        overflow: auto;
+        resize: none; /* Prevent user from resizing the textarea */
     }
 
     button {
@@ -285,10 +287,7 @@
         }
 
         loadUsers();
-
-
-
-   
+            
 
     function sendMessage() {
         let input = document.getElementById("messageInput");
