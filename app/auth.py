@@ -1,21 +1,19 @@
-import logging
 import os
 
-from fastapi import Request, HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-from itsdangerous import URLSafeTimedSerializer
-from .database import SessionLocal
-from .models import User
-from .schemas import TokenData
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from datetime import datetime, timedelta
-from . import schemas, models, crud
+from sqlalchemy.orm import Session
 
-SECRET_KEY = "secret_key"  # todo: change to some .env token
+from . import models, crud
+from .database import SessionLocal
+from .schemas import TokenData
+
+# Will someone punish me for that?
+SECRET_KEY = "secret_key"  # todo: change to some .env token.
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -80,7 +78,3 @@ async def get_current_user(db: Session = Depends(get_db), token: str = Depends(o
     if user is None:
         raise credentials_exception
     return user
-
-
-# async def get_current_active_user(current_user: models.User = Depends(get_current_user)) -> models.User:
-#     return current_user

@@ -1,4 +1,3 @@
-import logging
 from uuid import uuid4
 from datetime import timedelta, datetime
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request, Form, HTTPException, status, Cookie
@@ -8,16 +7,16 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from .models import Base, Message, User
+from .models import Base, User
 from .schemas import MessageCreate
-from .crud import create_message, get_last_messages, get_user_by_email
+from .crud import create_message, get_last_messages
 from .database import SessionLocal, engine
-from . import models, schemas, crud, auth
-from .auth import get_password_hash, authenticate_user, get_db
+from . import schemas, crud, auth
+from .auth import get_password_hash, authenticate_user
 
 from typing import List
 
-SECRET_KEY = "your_secret_key"  # Replace with your secret key
+SECRET_KEY = "your_secret_key"  # todo: move to .env
 ALGORITHM = "HS256"
 
 app = FastAPI()
@@ -43,6 +42,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
 def get_current_user_from_cookie(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
     if not token:
@@ -77,6 +78,7 @@ def read_users(db: Session = Depends(get_db), current_user: User = Depends(get_c
     users = crud.get_all_users(db)
     return users
 
+
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     if expires_delta:
@@ -88,15 +90,8 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 
-
 def validate_token(token: str) -> bool:
-    """
-    Validate the provided JWT token.
-
-    This function verifies the token's signature and checks if it is valid.
-    """
     try:
-        # Decode the token, verifying the signature and validating its claims
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return True
     except JWTError:
@@ -109,7 +104,6 @@ def get_user_data_from_token(token: str):
         return payload
     except JWTError:
         return None
-
 
 
 @app.get("/sign-up")
@@ -164,9 +158,6 @@ async def protected_route(request: Request, current_user: User = Depends(get_cur
     return auth.templates.TemplateResponse("index.html", {"request": request})
 
 
-# return {"message": f"Hello, {current_user.username}!"}
-
-
 @app.get("/user-info")
 async def get_user_info(current_user: User = Depends(get_current_active_user)):
     return {"email": current_user.email}
@@ -177,6 +168,7 @@ async def logout(response: Response, access_token: str = Cookie(None)):
     if access_token:
         response.set_cookie(key="access_token", value="", expires=0, httponly=True)
     return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
+
 
 class ConnectionManager:
     def __init__(self):

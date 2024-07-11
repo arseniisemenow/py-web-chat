@@ -1,6 +1,8 @@
 import socket
 import time
 
+# Kostil' to wait db while building using docker-compose
+
 def check_port(host, port):
     while True:
         try:

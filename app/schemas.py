@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, constr
+from pydantic import BaseModel
 from datetime import datetime
 
 class MessageCreate(BaseModel):
