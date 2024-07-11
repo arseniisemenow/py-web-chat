@@ -19,9 +19,10 @@ from typing import List
 SECRET_KEY = "your_secret_key"  # todo: move to .env
 ALGORITHM = "HS256"
 
-app = FastAPI()
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+app = FastAPI()
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,

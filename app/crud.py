@@ -20,10 +20,6 @@ def get_last_messages(db: Session, limit: int = 5):
     return last_messages
 
 
-# def get_last_messages(db: Session, limit: int = 10):
-#     return db.query(models.Message).order_by(models.Message.timestamp.desc()).limit(limit).all()
-
-
 def get_user_by_email(db: Session, email: str) -> models.User | None:
     return db.query(models.User).filter(models.User.email == email).first()
 

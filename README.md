@@ -1,5 +1,7 @@
 # Chat Project
 
-## Запуск проекта
+## Building project
 
-[//]: # (todo: supplement)
+```bash
+docker-compose up -d --build
+```
