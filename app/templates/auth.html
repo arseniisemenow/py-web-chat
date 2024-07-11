@@ -68,10 +68,10 @@
 <body>
 <form id="loginForm" onsubmit="submitForm(event)">
     <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
+    <input type="text" id="username" name="username" maxlength="70" required>
     <br>
     <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
+    <input type="password" id="password" name="password" maxlength="70" required >
     <br>
     <button type="submit">Log In </button>
     <a href="/sign-up">Dont have an account yet? Sign up!</a> 

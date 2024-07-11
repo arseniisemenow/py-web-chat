@@ -69,20 +69,45 @@
 <body>
     <form id="signup-form" onsubmit="submitForm(event)">
         <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
+        <input type="text" id="username" name="username" maxlength="70" required>
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
+        <input type="email" id="email" name="email" maxlength="70" required>
         <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password" name="password" maxlength="70" required>
         <button type="submit">Sign Up</button>
         <p id="error-info" class="error-message"></p>
         <a href="/auth">Already have an account? Log in!</a> 
     </form>
 
     <script>
+
+    function validatePassword() {
+        const password = document.getElementById('password').value;
+        const passwordRequirement = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
+        if (!passwordRequirement.test(password)) {
+            document.getElementById('error-info').textContent = 'Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character';
+            return false;
+        }
+        return true;
+    }
+
+
+    document.getElementById('password').addEventListener('input', function(event) {
+        const inputValue = event.target.value;
+        const allowedCharacters = /^[a-zA-Z0-9!@#$%^&*()_+{}\[\]:;<>,.?~-]*$/; // Регулярное выражение для разрешённых символов
+
+        if (!allowedCharacters.test(inputValue)) {
+            // Если вводится неразрешённый символ, очистить поле ввода и вывести сообщение об ошибке
+            event.target.value = inputValue.slice(0, -1); // Удалить последний символ
+            document.getElementById('error-info').textContent = 'Недопустимый символ. Разрешены только латинские буквы, цифры и определенные спецсимволы';
+        } else {
+            document.getElementById('error-info').textContent = ''; // Очистить сообщение об ошибке
+        }
+    });
+
         function submitForm(event) {
             event.preventDefault(); // Prevent the default form submission
-
+            if (validatePassword()) {
             let formData = new FormData(document.getElementById('signup-form')); // Get form data
             fetch('/sign-up', {
                 method: 'POST',
@@ -108,6 +133,7 @@
                 document.getElementById('error-info').textContent = 'An error occurred. Please try again later.'; // Show a generic error message
             });
         }
+    }
     </script>
 </body>
 </html>
