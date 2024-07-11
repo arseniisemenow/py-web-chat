@@ -1,59 +1,64 @@
 <!DOCTYPE html>
 <html>
-<head>
-   
+  <head>
     <title>WebSocket Chat</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
     <style>
-        :root {
-            --background-color: #222;
-            --text-color: #ffffff;
-            --user-name-color: rgb(150,150,150);
-            --message-back-color: #444;
-            --button-back-color: #4c81af;
-            --button-font-color: #ffffff;
-            --input-back-color: #444;;
-            --input-font-color: #ffffff;
-            --areas-back-color: #333;
-        }
+      :root {
+        --background-color: #222;
+        --text-color: #ffffff;
+        --user-name-color: rgb(150, 150, 150);
+        --message-back-color: #444;
+        --button-back-color: #4c81af;
+        --button-font-color: #ffffff;
+        --input-back-color: #444;
+        --input-font-color: #ffffff;
+        --areas-back-color: #333;
+        --border-back-color: #555;
+      }
 
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            height: 98vh;
-            width: 98vw;
-            margin: 10px;
-            overflow: hidden;
-        }
+      body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        height: 98vh;
+        width: 98vw;
+        margin: 10px;
+        overflow: hidden;
+      }
 
-        h1 {
-            text-align: center;
-            margin-top: 20px;
-        }
+      h1 {
+        text-align: center;
+        margin-top: 20px;
+      }
 
-        .chat-container {
-            display: flex;
-            flex: 1;
-        }
+      .chat-container {
+        display: flex;
+        flex: 1;
+      }
 
-        #users-area {
-            overflow-x:none ;
-            overflow-y: auto;
-            border-radius: 8px;
-            width: 20%;
-            overflow: auto;
-            background-color: var(--areas-back-color);
-            padding: 10px;
-            min-width: 200px;
-            border: 1px solid #555;
-            margin-bottom: 10px;
-            max-height: fit-content;
-            max-height: 90vh;
-        }
+      #users-area {
+        overflow-x: none;
+        overflow-y: auto;
+        border-radius: 8px;
+        width: 20%;
+        overflow: auto;
+        background-color: var(--areas-back-color);
+        padding: 10px;
+        min-width: 200px;
+        border: 1px solid var(--border-back-color);
+        margin-bottom: 10px;
+        max-height: fit-content;
+        max-height: 90vh;
+      }
 
-        #chat-area {
+      #chat-area {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -63,60 +68,59 @@
         margin-bottom: 10px;
         background-color: var(--areas-back-color);
         border-radius: 8px;
-        border: 1px solid #555;
+        border: 1px solid var(--border-back-color);
         overflow: hidden;
-    }
+      }
 
-    #messages_list {
+      #messages_list {
         flex: 1;
         overflow-y: auto;
         padding: 10px;
         background-color: var(--areas-back-color);
         border-radius: 8px;
-        max-height: 85vh;  /* Changed max-height to 50% of the viewport height */
-    }
+        max-height: 85vh;
+      }
 
-    .user-message {
+      .user-message {
         border: 25px;
         background-color: var(--message-back-color);
         border-radius: 8px;
         padding: 15px;
         margin: 4px 0;
         font-size: medium;
-        border: 1px solid #555;
+        border: 1px solid var(--border-back-color);
         overflow-x: none;
-        word-wrap: break-word; /* Add this line to enable word wrapping */
-        white-space: pre-line; /* Ensure that new lines are respected */
-    }
+        word-wrap: break-word;
+        white-space: pre-line;
+      }
 
-    .current-user-message {
- 
+      .current-user-message {
         background-color: var(--button-back-color);
         border: 25px;
         border-radius: 8px;
         padding: 15px;
         margin: 4px 0;
         font-size: medium;
-        border: 1px solid #555;
+        border: 1px solid var(--border-back-color);
         overflow-x: none;
-        word-wrap: break-word; /* Add this line to enable word wrapping */
+        word-wrap: break-word;
         white-space: pre-line;
-    }
+      }
 
-   .mesage-username {
+      .mesage-username {
         color: var(--user-name-color);
         margin-bottom: 5px;
         font-size: medium;
-            font-weight: bold;
-        }
+        font-weight: bold;
+      }
 
-    .input-group {
+      .input-group {
         min-height: 40px;
         display: flex;
         align-items: center;
-    }
+      }
 
-    #messageInput {
+      #messageInput {
         flex: 1;
         height: 40px;
         border-radius: 8px 0 0 8px;
@@ -125,11 +129,10 @@
         border: none;
         padding: 0 10px;
         overflow: auto;
-        resize: none; /* Prevent user from resizing the textarea */
+        resize: none;
+      }
 
-    }
-
-    button {
+      button {
         min-width: 80px;
         height: 40px;
         border-radius: 0 8px 8px 0;
@@ -137,230 +140,216 @@
         color: var(--button-font-color);
         border: none;
         cursor: pointer;
-    }
+      }
 
-    .user{
-
+      .user {
         border: 25px;
         background-color: var(--message-back-color);
         border-radius: 8px;
         padding: 15px;
         margin: 4px 0;
         font-size: medium;
-        border: 1px solid #555;
-    }
+        border: 1px solid var(--border-back-color);
+      }
 
-    br {
-        content: ' ';
+      br {
+        content: " ";
         display: block;
-        margin: 5px; /* Регулируйте отступы, чтобы задать желаемую толщину линии */
-        border-bottom: 1px solid #ccc; /* Линия будет серого цвета, можно заменить на нужный цвет */
-    }
+        margin: 5px;
+        border-bottom: 1px solid #ccc;
+      }
 
-    .logout-button {
-            position: absolute;
-            top: 10px; /* Расположение сверху */
-            right: 10px; /* Расположение справа */
-            border: none;
-            border-radius: 5px;
-            padding: 8px 16px;
-            background-color: #6a0808;
-            color: #ffffff;
-        }
+      .logout-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 16px;
+        background-color: #6a0808;
+        color: #ffffff;
+      }
 
-    #current-user {
+      #current-user {
         background-color: var(--button-back-color);
-    }
-
+      }
     </style>
-</head>
-<body>
-      <div class="header-container">
-        <h1>WebSocket Chat</h1>
-        <button class="logout-button" onclick="logout()">Logout</button>
+  </head>
+  <body>
+    <div class="header-container">
+      <h1>WebSocket Chat</h1>
+      <button class="logout-button" onclick="logout()">Logout</button>
     </div>
-    
+
     <div class="chat-container">
-        <div  id="users-area">
-            <label>Welcome!</label>
-            <div id="current-user" class="user" >Users</div>
-            <br>
-            <div id="users_list">
-                members
-            </div>
+      <div id="users-area">
+        <label>Welcome!</label>
+        <div id="current-user" class="user">Users</div>
+        <br />
+        <div id="users_list">members</div>
+      </div>
 
+      <div id="chat-area">
+        <div id="messages_list"></div>
+        <div class="input-group">
+          <textarea
+            id="messageInput"
+            class="form-control"
+            autocomplete="off"
+            maxlength="1000"
+          ></textarea>
+          <button onclick="sendMessage()">Send</button>
         </div>
-       
-        <div id="chat-area">
-            
-            <div id="messages_list">
-
-            </div>
-            <div class="input-group">
-                <textarea id="messageInput" class="form-control" autocomplete="off" maxlength="1000"></textarea>
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
+      </div>
     </div>
 
-    
-<script defer>
+    <script defer>
+      let ws;
+      let token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("access_token"))
+        .split("=")[1];
+      let current_user;
+      function loadUserInfo() {
+        fetch("/user-info")
+          .then((response) => response.json())
+          .then((userInfo) => {
+            let usersArea = document.getElementById("current-user");
+            usersArea.textContent = userInfo.email;
+            current_user = userInfo.email;
+          })
+          .catch((error) => {
+            console.error(
+              "Ошибка при получении информации о пользователе:",
+              error
+            );
+          });
+      }
 
-    //let ws;
-    //let token = document.cookie.split('; ').find(row => row.startsWith('access_token')).split('=')[1];
-    
-
-    // function connectWebSocket() {
-    //     ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
-    // }
-
-    // connectWebSocket();
-
-    let ws;
-    let token = document.cookie.split('; ').find(row => row.startsWith('access_token')).split('=')[1];
-    let current_user;
-    function loadUserInfo() {
-        fetch('/user-info')
-            .then(response => response.json())
-            .then(userInfo => {
-                let usersArea = document.getElementById('current-user');
-                usersArea.textContent = userInfo.email; // Устанавливаем информацию о пользователе в элемент
-                current_user = userInfo.email;
-            })
-            .catch(error => {
-                console.error('Ошибка при получении информации о пользователе:', error);
-            });
-    }
-
-    function connectWebSocket(current_user) {
+      function connectWebSocket(current_user) {
         ws = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
-        ws.onmessage = function(event) {
-            let messagesDiv = document.getElementById('messages_list');
-            let messageData = event.data.split(' - ');
-            let timeData = messageData[0].trim();
-            let time = timeData.substr(11, 5);
+        ws.onmessage = function (event) {
+          let messagesDiv = document.getElementById("messages_list");
+          let messageData = event.data.split(" - ");
+          let timeData = messageData[0].trim();
+          let time = timeData.substr(11, 5);
 
-            let userData = messageData[1].split(':');
-            let user_email = userData[0].trim(); // Используйте trim() здесь
-            let messageText = userData.slice(1).join(':').trim();
+          let userData = messageData[1].split(":");
+          let user_email = userData[0].trim();
+          let messageText = userData.slice(1).join(":").trim();
 
-            let message = document.createElement('div');
-            console.log(`current_user: ${current_user} real_user - ${user_email}`);
-        
-            if (current_user === user_email) { // Используйте trim() здесь
-                message.className = 'current-user-message';
-            } else {
-                message.className = 'user-message';
-            }
-            //message.className = 'user-message';
-            let userNameElement = document.createElement('div');
-            userNameElement.textContent = `${user_email} - ${time}`;
-            userNameElement.className = 'message-username';
+          let message = document.createElement("div");
+          console.log(
+            `current_user: ${current_user} real_user - ${user_email}`
+          );
 
-            let messageElement = document.createElement('div');
-            messageElement.textContent = messageText;
-            messageElement.className = 'message-text';
+          if (current_user === user_email) {
+            message.className = "current-user-message";
+          } else {
+            message.className = "user-message";
+          }
+          let userNameElement = document.createElement("div");
+          userNameElement.textContent = `${user_email} - ${time}`;
+          userNameElement.className = "message-username";
 
-            message.appendChild(userNameElement);  // Добавляем элемент с временем и почтой пользователя в сообщение
-            message.appendChild(messageElement);  // Добавляем элемент с текстом сообщения в сообщение
+          let messageElement = document.createElement("div");
+          messageElement.textContent = messageText;
+          messageElement.className = "message-text";
 
-            messagesDiv.appendChild(message);
-            limitMessages();
+          message.appendChild(userNameElement);
+          message.appendChild(messageElement);
+
+          messagesDiv.appendChild(message);
+          limitMessages();
         };
-    }
+      }
 
+      function loadUserInfoAndConnectWebSocket() {
+        fetch("/user-info")
+          .then((response) => response.json())
+          .then((userInfo) => {
+            let usersArea = document.getElementById("current-user");
+            usersArea.textContent = userInfo.email;
+            connectWebSocket(userInfo.email);
+          })
+          .catch((error) => {
+            console.error(
+              "Ошибка при получении информации о пользователе:",
+              error
+            );
+          });
+      }
 
-    function loadUserInfoAndConnectWebSocket() {
-        fetch('/user-info')
-            .then(response => response.json())
-            .then(userInfo => {
-                let usersArea = document.getElementById('current-user');
-                usersArea.textContent = userInfo.email; // Устанавливаем информацию о пользователе в элемент
-                connectWebSocket(userInfo.email); // Подключаем WebSocket после получения информации о пользователе
-            })
-            .catch(error => {
-                console.error('Ошибка при получении информации о пользователе:', error);
+      loadUserInfoAndConnectWebSocket();
+
+      function loadUsers() {
+        fetch("/users")
+          .then((response) => response.json())
+          .then((users) => {
+            let usersDiv = document.getElementById("users_list");
+
+            users.forEach((user) => {
+              let userElement = document.createElement("div");
+
+              userElement.className = "user";
+              let userNameElement = document.createElement("div");
+              userNameElement.textContent = user.name;
+
+              userNameElement.className = "user-name";
+
+              let userEmailElement = document.createElement("div");
+              userEmailElement.textContent = user.email;
+              userEmailElement.className = "user-email";
+
+              userElement.appendChild(userNameElement);
+              userElement.appendChild(userEmailElement);
+
+              usersDiv.appendChild(userElement);
             });
-    }
+          })
+          .catch((error) => {
+            console.error("Ошибка при получении пользователей:", error);
+          });
+      }
 
-    loadUserInfoAndConnectWebSocket();
+      loadUsers();
 
-
-        function loadUsers() {
-            fetch('/users')
-                .then(response => response.json())
-                .then(users => {
-                    let usersDiv = document.getElementById('users_list');
-
-                    users.forEach(user => {
-                        let userElement = document.createElement('div');
-                     
-                        userElement.className = 'user';
-                        let userNameElement = document.createElement('div');
-                        userNameElement.textContent = user.name;
-                      
-                        userNameElement.className = 'user-name';
-
-                        let userEmailElement = document.createElement('div');
-                        userEmailElement.textContent = user.email;
-                        userEmailElement.className = 'user-email';
-
-                        userElement.appendChild(userNameElement);
-                        userElement.appendChild(userEmailElement);
-
-                        usersDiv.appendChild(userElement);
-                    });
-                })
-                .catch(error => {
-                    console.error('Ошибка при получении пользователей:', error);
-                });
-        }
-
-        loadUsers();
-            
-
-    function sendMessage() {
+      function sendMessage() {
         let input = document.getElementById("messageInput");
         let message = input.value;
-        if (ws.readyState === WebSocket.OPEN && message!="") {
-            ws.send(message);
-            input.value = '';
+        if (ws.readyState === WebSocket.OPEN && message != "") {
+          ws.send(message);
+          input.value = "";
         }
-    }
+      }
 
-    function logout() {
-    fetch('/logout')
-        .then(response => {
-            if (response.redirected) {
-		// Обрабатываем перенаправление на страницу /auth
-                window.location.href = response.url; 
-            } else {
-		// Если не было перенаправления, можно перенаправить вручную
-                window.location.href = '/auth'; 
-            }
+      function logout() {
+        fetch("/logout").then((response) => {
+          if (response.redirected) {
+            window.location.href = response.url;
+          } else {
+            window.location.href = "/auth";
+          }
         });
-}
+      }
 
-    
-
-    document.getElementById("messageInput").addEventListener("keyup", function(event) {
-        if (event.key === "Enter") {
+      document
+        .getElementById("messageInput")
+        .addEventListener("keyup", function (event) {
+          if (event.key === "Enter") {
             sendMessage();
-        }
-    });
+          }
+        });
 
-    function limitMessages() {
-        let messagesDiv = document.getElementById('messages_list');
+      function limitMessages() {
+        let messagesDiv = document.getElementById("messages_list");
         const maxMessagesToShow = 10;
         if (messagesDiv.children.length > maxMessagesToShow) {
-            while (messagesDiv.children.length > maxMessagesToShow) {
-                messagesDiv.removeChild(messagesDiv.children[0]);
-            }
+          while (messagesDiv.children.length > maxMessagesToShow) {
+            messagesDiv.removeChild(messagesDiv.children[0]);
+          }
         }
-    }
-
-  
-
-</script>
-</body>
+      }
+    </script>
+  </body>
 </html>
