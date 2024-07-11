@@ -3,3 +3,4 @@ venv
 alembic.ini
 alembic
 app/__pycache__
+.DS_Store
