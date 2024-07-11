@@ -1,12 +1,8 @@
-version: '3.8'
+version: "3.8"
 
 services:
-
   db:
-
-    build: 
-      context: ./
-      dockerfile: Dockerfile.db
+    image: postgres
     environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
@@ -15,9 +11,9 @@ services:
       - "5432:5432"
 
   app:
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile.app
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     depends_on:
